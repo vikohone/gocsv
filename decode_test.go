@@ -1237,3 +1237,50 @@ false,email_one,true,email_two,false,email_three`)
 		t.Fatalf("expected \n  sample: %v\n     got: %v", expected, samples)
 	}
 }
+
+func TestHeaderNormalizationRace(t *testing.T) {
+	// Define a struct with a header named "ExAmpleHeader"
+	type csvStruct struct {
+		ExampleHeader string `csv:"ExAmpleHeader"`
+	}
+
+	tests := []struct {
+		name     string
+		normalizer func(string) string
+		expected string
+	}{
+		{
+			name: "UpperCaseNormalizer",
+			normalizer: func(s string) string {
+				return strings.ToUpper(s)
+			},
+			expected: "EXAMPLEHEADER",
+		},
+		{
+			name: "LowerCaseNormalizer",
+			normalizer: func(s string) string {
+				return strings.ToLower(s)
+			},
+			expected: "exampleheader",
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			defer SetHeaderNormalizer(DefaultNameNormalizer())
+
+			SetHeaderNormalizer(tt.normalizer)
+
+			var csvData = []*csvStruct{
+				{ExampleHeader: "SomeData"},
+			}
+			csvContent, _ := MarshalString(&csvData)
+			if !strings.Contains(csvContent, tt.expected) {
+				t.Errorf("expected %s, got %s", tt.expected, csvContent)
+			}
+		})
+	}
+}
