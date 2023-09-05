@@ -56,7 +56,7 @@ func DefaultNameNormalizer() Normalizer { return func(s string) string { return 
 // SetHeaderNormalizer sets the normalizer used to normalize struct and header field names.
 func SetHeaderNormalizer(f Normalizer) {
 	normalizeName = f
-	// Need to clear the cache hen the header normalizer changes.
+	// Need to clear the cache when the header normalizer changes.
 	structInfoCache = sync.Map{}
 }
 
